@@ -1,29 +1,30 @@
 package library.user;
 
-import java.util.List;
+import library.authentication.UserCredentials;
+import library.encryption.PasswordEncryption;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class UserService {
 
-  private final UserClient userClient;
+  private final UserRepository userRepository;
 
-  public User searchForUser(String username) {
-    return userClient.findByUsername(username);
-  }
+  private final PasswordEncryption passwordEncryption;
 
-  public void createUser(User user) {
-    user = User.builder()
-        .username(user.getUsername())
-        .password(user.getPassword())
-        .build();
+  public void createUser(UserCredentials userCredentials) {
+    String password = passwordEncryption.generatePassword(userCredentials.getPassword());
 
-    userClient.createUser(user);
-  }
+    log.info("Created user " + userCredentials.getId());
 
-  public List<User> returnAllUsers() {
-    return userClient.returnAllUsers();
+    userRepository.save(UserCredentials.builder()
+        .id(userCredentials.getId())
+        .username(userCredentials.getUsername())
+        .password(password)
+        .build());
   }
 }
+
